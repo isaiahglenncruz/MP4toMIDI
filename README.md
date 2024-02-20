@@ -1,4 +1,4 @@
-# MP4toMIDI
+# MP4toSheet
 Python program that creates an equivalent sheet music PDF file for all .mp4 files in 
 the same directory as converter.py.
 
