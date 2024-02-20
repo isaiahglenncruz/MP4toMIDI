@@ -2,11 +2,11 @@ import os
 import sys
 from spleeter.separator import Separator
 from pydub import AudioSegment
+from aubio import source, notes, miditofreq, freqtomidi
+from music21 import stream, midi
 
 # main function for audio conversion
 def audio_to_midi(audio_path, midi_path):
-    from aubio import source, notes, miditofreq, freqtomidi
-
     win_s = 512                 # window size for pitch analysis
     hop_s = win_s // 2           # hop size (overlap)
     samplerate = 44100
@@ -49,6 +49,26 @@ def audio_to_midi(audio_path, midi_path):
     midi_file.write("0, 0, End_of_file\n")
     midi_file.close()
 
+# function to convert MIDI file to sheet music PDF file
+def midi_to_pdf(midi_path, pdf_path):
+    mf = midi.MidiFile()
+    mf.open(midi_path)
+    mf.read()
+    mf.close()
+
+    # create file stream from midi
+    midi_stream = midi.translate.midiFileToStream(mf)
+    
+    # create score
+    score = stream.Score()
+    part = stream.Part()
+    part.append(midi_stream)
+    score.append(part)
+
+    # write to PDF
+    score.write('musicxml.pdf.pdf', 'musicxml.pdf')
+    os.rename('musicxml.pdf.pdf', pdf_path)
+
 # separating vocals and accompaniment using Spleeter library
 def separate_audio(input_path, output_path):
     separator = Separator('spleeter:2stems')
@@ -72,6 +92,10 @@ if len(sys.argv) == 2 and sys.argv[1] == "-run":
         # converting to MIDI
         output_midi_path = mp4_file.replace(".mp4", "_accompaniment.mid")
         audio_to_midi(output_accompaniment_path, output_midi_path)
+
+        # converting MIDI to sheet music PDF
+        output_pdf_path = mp4_file.replace(".mp4", "_sheet_music.pdf")
+        midi_to_pdf(output_midi_path, output_pdf_path)
 
         print(f"Conversion complete for {mp4_file}")
 else:
